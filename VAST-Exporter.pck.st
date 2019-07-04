@@ -99,7 +99,7 @@ testClassDefinitions
 testDefaultAppChunk
 	self assert: 'VASTExporterTestPackageApp becomeDefault' equals: exporter defaultAppChunk ! !
 
-!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:04:20'!
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:09:18'!
 testFeatureSpec
 	| spec sunit |
 	sunit := (CodePackage new packageName: 'SUnit') requirementOfMe.
@@ -109,11 +109,12 @@ testFeatureSpec
     (#( SUnit)
         collect: [:each | Smalltalk at: each ifAbsent: [
             Application errorPrerequisite: #VASTExporterTestPackageApp missing: each]])!!
+
 ' equals: spec
 
 	! !
 
-!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 01:50:32'!
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:09:22'!
 testFeatureSpecEmptyRequires
 	| spec |
 	spec := String streamContents: [:strm | exporter writeFeatureSpecOn: strm].
@@ -121,12 +122,13 @@ testFeatureSpecEmptyRequires
     (#( Kernel)
         collect: [:each | Smalltalk at: each ifAbsent: [
             Application errorPrerequisite: #VASTExporterTestPackageApp missing: each]])!!
+
 ' equals: spec
 
 	
 ! !
 
-!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:10:53'!
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:09:27'!
 testFeatureSpecTwo
 	| spec req |
 	req := (CodePackage new packageName: 'SUnit') requirementOfMe.
@@ -138,6 +140,7 @@ testFeatureSpecTwo
     (#( SUnit Matanga)
         collect: [:each | Smalltalk at: each ifAbsent: [
             Application errorPrerequisite: #VASTExporterTestPackageApp missing: each]])!!
+
 ' equals: spec
 
 	! !
@@ -145,6 +148,52 @@ testFeatureSpecTwo
 !VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 01:42:43'!
 testName
 	self assert: 'VAST-Exporter-TestPackage' equals: exporter package packageName! !
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:43:23'!
+testWriteMethodOn
+	| result reference expected |
+	reference := package referenceForMethod: #setUp ofClass: self class.
+	
+	result := String streamContents: [:strm |
+		exporter writeMethod: reference on: strm].
+	
+	expected := (self class sourceCodeAt: #setUp), '!!
+'.
+	self assert: expected equals: result ! !
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:52:11'!
+testWriteMethodsHeaderOn
+	| result expected |
+	result := String streamContents: [:strm |
+		exporter writeMethodsHeaderFor: self class on: strm].
+	
+	expected := '!!VASTExporterTest methods!!
+
+'.
+	self assert: expected equals: result ! !
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:52:55'!
+testWriteMethodsHeaderOnMetaclass
+	| result expected |
+	result := String streamContents: [:strm |
+		exporter writeMethodsHeaderFor: self class class on: strm].
+	
+	expected := '!!VASTExporterTest class methods!!
+
+'.
+	self assert: expected equals: result ! !
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:41:49'!
+testWriteMethodsOn
+	| result expected |
+	
+	result := String streamContents: [:strm |
+		exporter write: {VASTExporterTest} methodsOn: strm].
+	
+	expected := 'VASTExporterTestPackageApp becomeDefault!!
+', (self class sourceCodeAt: #setUp), '!!
+'.
+	self assert: expected equals: result ! !
 
 !VASTExporterTest methodsFor: 'initialization' stamp: 'gera 7/4/2019 02:01:07'!
 setUp
@@ -235,18 +284,39 @@ write: class classCommentsOn: aStream
 				nextChunkPut: class name, ' comment: ', comment storeString; newLine;
 				newLine]]! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 03:05:08'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:38:58'!
 write: sortedClasses classDefinitionsOn: aStream
 	sortedClasses
 		do: [ :class |
+			self writeDefaultAppOn: aStream.
 			aStream
-				nextChunkPut: self defaultAppChunk; newLine;
 				nextChunkPut: (self classDefinitionFor: class); newLine;
 				newLine.
 			self write: class classCommentsOn: aStream]
 		displayingProgress: 'Saving class definitions...'.! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:09:39'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:50:11'!
+write: classes methodsOn: aStream
+	self writeDefaultAppOn: aStream.
+	aStream newLine.
+	classes
+		do: [ :class |
+			self writeClassMethods: class class on: aStream.
+			self writeClassMethods: class on: aStream]
+		displayingProgress: 'Saving methods...'! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:49:32'!
+writeClassMethods: class on: aStream
+		self 
+			writeMethodsHeaderFor: class on: aStream;
+			writeCoreMethodsOf: class on: aStream;
+		 	writeCoreMethodsOf: class class on: aStream! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:38:16'!
+writeDefaultAppOn: aStream.
+	aStream nextChunkPut: self defaultAppChunk; newLine.! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:09:56'!
 writeFeatureSpecOn: aStream
 	| chunk requires |
 	chunk := String streamContents: [:strm |
@@ -265,9 +335,26 @@ writeFeatureSpecOn: aStream
 			nextPutAll: '            Application errorPrerequisite: #', vastName, ' missing: each]])'.
 	].	
 	
-	aStream nextChunkPut: chunk; newLine.! !
+	aStream nextChunkPut: chunk; newLine; newLine.! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:14:42'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:44:01'!
+writeMethod: methodReference on: aStream
+	methodReference actualClass
+		printMethodChunk: methodReference methodSymbol
+		withPreamble: false
+		on: aStream
+		moveSource: false
+		toFile: 0! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:51:03'!
+writeMethodsHeaderFor: class on: aStream
+	aStream
+		nextPut: $!!;
+		nextChunkPut: class name, ' methods';
+		newLine;
+		newLine! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 03:29:49'!
 writeOnStream: aStream
 	" This method is based in CodePacket >> #writeOnStream "
 	| sortedClasses |
@@ -289,8 +376,8 @@ writeOnStream: aStream
 	self
 		write: sortedClasses classDefinitionsOn: aStream;
 		write: sortedClasses classCommentsOn: aStream;
-		write: sortedClasses methodsForFileinOn: aStream;
-		write: sortedClasses methodsOn: aStream.
+"		write: sortedClasses methodsForFileinOn: aStream;
+"		write: sortedClasses methodsOn: aStream.
 
 	package
 		sortedExtensionMethodsDo:  [ :methodReference |
