@@ -1,12 +1,12 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 1:34:43 am'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 1:43:19 am'!
 'Description '!
-!provides: 'VAST-Exporter' 1 1!
+!provides: 'VAST-Exporter' 1 2!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
 !classDefinition: #VASTExporterTest category: #'VAST-Exporter'!
 TestCase subclass: #VASTExporterTest
-	instanceVariableNames: 'exporter'
+	instanceVariableNames: 'package exporter'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'VAST-Exporter'!
@@ -25,13 +25,22 @@ VASTExporter class
 	instanceVariableNames: ''!
 
 
-!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 01:33:46'!
-testName
-	self assert: exporter package packageName equals: 'VAST-Exporter'! !
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 01:37:11'!
+testFeatureSpec
+	| spec |
+	spec := String streamContents: [:strm | exporter writeFeatureSpecOn: strm].
+	self assert: false! !
 
-!VASTExporterTest methodsFor: 'initialization' stamp: 'gera 7/4/2019 01:33:59'!
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 01:42:43'!
+testName
+	self assert: 'VAST-Exporter-TestPackage' equals: exporter package packageName! !
+
+!VASTExporterTest methodsFor: 'initialization' stamp: 'gera 7/4/2019 01:41:51'!
 setUp
-	exporter := VASTExporter forPackageNamed: 'VAST-Exporter' as: 'VASTExporterApp'! !
+	package := CodePackage new packageName: 'VAST-Exporter-TestPackage'.
+	exporter := VASTExporter new
+		package: package;
+		vastName: 'VASTExporterTestPackageApp'! !
 
 !VASTExporter methodsFor: 'accessing' stamp: 'gera 7/4/2019 01:34:22'!
 package
