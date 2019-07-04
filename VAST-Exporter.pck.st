@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 3:29:08 am'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 5:53:34 pm'!
 'Description '!
-!provides: 'VAST-Exporter' 1 8!
+!provides: 'VAST-Exporter' 1 9!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
@@ -28,7 +28,7 @@ VASTExporter class
 !VASTExporterTest commentStamp: 'gera 7/4/2019 02:54:26' prior: 0!
 This class has a comment so it can be tested!
 
-!VASTExporter commentStamp: 'gera 7/4/2019 03:27:54' prior: 0!
+!VASTExporter commentStamp: 'gera 7/4/2019 03:37:11' prior: 0!
 A simple way to export code from Cuis into VAST.
 
 VAST code used as reference:
@@ -38,6 +38,7 @@ Application >> fileOutCreationOn: aStream
 SubApplication >> fileOutDefinitionFor: aClass on: stream
 SubApplication >> fileOutMethodsOn: stream
 
+EmFileOutInterface >> fileOutCompiledMethods: methods on: stream
 !
 
 !VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 03:09:08'!
