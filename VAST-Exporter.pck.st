@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 2:10:59 am'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 2:25:16 am'!
 'Description '!
-!provides: 'VAST-Exporter' 1 4!
+!provides: 'VAST-Exporter' 1 5!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
@@ -24,6 +24,21 @@ Object subclass: #VASTExporter
 VASTExporter class
 	instanceVariableNames: ''!
 
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:25:10'!
+testClassDefinition
+	| expected actual |
+	expected := 'TestCase subclass: #VASTExporterTest
+	classInstanceVariableNames: ''''
+	instanceVariableNames: ''package exporter''
+	classVariableNames: ''''
+	poolDictionaries: '''''.
+	actual := exporter classDefinitionFor: self class.
+	self assert: expected equals: actual.! !
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:19:15'!
+testDefaultAppChunk
+	self assert: 'VASTExporterTestPackageApp becomeDefault' equals: exporter defaultAppChunk ! !
 
 !VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:04:20'!
 testFeatureSpec
@@ -103,6 +118,50 @@ vastName: anObject
 
 	vastName _ anObject! !
 
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:23:09'!
+classDefinitionFor: class
+	^String streamContents: [ :strm |
+		strm
+			nextPutAll: class superclass name;
+			nextPutAll: class kindOfSubclass;
+			store: class name.
+		strm
+			newLine;
+			tab;
+			nextPutAll: 'classInstanceVariableNames: ';
+			store: class class instanceVariablesString.
+		strm
+			newLine;
+			tab;
+			nextPutAll: 'instanceVariableNames: ';
+			store: class instanceVariablesString.
+		strm
+			newLine;
+			tab;
+			nextPutAll: 'classVariableNames: ';
+			store: class classVariablesString.
+		strm
+			newLine;
+			tab;
+			nextPutAll: 'poolDictionaries: ';
+			store: class sharedPoolsString]! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:18:22'!
+defaultAppChunk
+	^ vastName, ' becomeDefault'! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:17:57'!
+write: sortedClasses classDefinitionsOn: aStream
+
+	package classes
+		do: [ :class |
+			aStream
+				nextPut: $!!;
+				nextChunkPut: self defaultAppChunk;
+					nextChunkPut: (self classDefinitionFor: class);
+					newLine ]
+		displayingProgress: 'Saving class definitions...'.! !
+
 !VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:09:39'!
 writeFeatureSpecOn: aStream
 	| chunk requires |
@@ -123,6 +182,42 @@ writeFeatureSpecOn: aStream
 	].	
 	
 	aStream nextChunkPut: chunk; newLine.! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:14:42'!
+writeOnStream: aStream
+	" This method is based in CodePacket >> #writeOnStream "
+	| sortedClasses |
+	self writeFeatureSpecOn: aStream.
+
+	"
+	package codePackageClass ifNotNil: [ :codePackageClass |
+		self
+			write: {codePackageClass} classDefinitionsOn: aStream;
+			write: {codePackageClass} classCommentsOn: aStream;
+			write: {codePackageClass} methodsOn: aStream.
+		aStream nextChunkPut: codePackageClass name, ' prePackageInstall'; newLine ].
+	"
+	
+	sortedClasses _ Array streamContents: [ :strm |
+		package classesInSafeOrderDo: [ :cls |
+			cls == self class ifFalse: [
+				strm nextPut: cls ]]].
+	self
+		write: sortedClasses classDefinitionsOn: aStream;
+		write: sortedClasses classCommentsOn: aStream;
+		write: sortedClasses methodsForFileinOn: aStream;
+		write: sortedClasses methodsOn: aStream.
+
+	package
+		sortedExtensionMethodsDo:  [ :methodReference |
+			methodReference isValid ifTrue: [
+				self writeMethod: methodReference on: aStream ]]
+		displayingProgress: 'Saving extension methods...'.
+	self write: sortedClasses initializersOn: aStream.
+
+	package codePackageClass ifNotNil: [ :codePackageClass |
+		self write: { codePackageClass } initializersOn: aStream.
+		aStream nextChunkPut: codePackageClass name, ' postPackageInstall'; newLine ]! !
 
 !VASTExporter class methodsFor: 'as yet unclassified' stamp: 'gera 7/4/2019 01:31:20'!
 forPackageNamed: aString as: vastName
