@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 2:09:49 am'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 2:10:59 am'!
 'Description '!
-!provides: 'VAST-Exporter' 1 3!
+!provides: 'VAST-Exporter' 1 4!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
@@ -51,6 +51,22 @@ testFeatureSpecEmptyRequires
 
 	
 ! !
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:10:53'!
+testFeatureSpecTwo
+	| spec req |
+	req := (CodePackage new packageName: 'SUnit') requirementOfMe.
+	package featureSpec requires: req.
+	req := (CodePackage new packageName: 'Matanga') requirementOfMe.
+	package featureSpec requires: req.
+	spec := String streamContents: [:strm | exporter writeFeatureSpecOn: strm].
+	self assert: 'Application create: #VASTExporterTestPackageApp with:
+    (#( SUnit Matanga)
+        collect: [:each | Smalltalk at: each ifAbsent: [
+            Application errorPrerequisite: #VASTExporterTestPackageApp missing: each]])!!
+' equals: spec
+
+	! !
 
 !VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 01:42:43'!
 testName
