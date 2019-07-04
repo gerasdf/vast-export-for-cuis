@@ -66,6 +66,24 @@ vastName: anObject
 
 	vastName _ anObject! !
 
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 01:36:35'!
+writeFeatureSpecOn: aStream
+	| chunk |
+	chunk := String streamContents: [:strm |
+		strm
+			nextPutAll: 'Application create: #', vastName, ' with:'; newLine;
+			nextPutAll: '    (#('.
+		package featureSpec requires do: [ :requires |
+			strm space; nextPutAll: requires name asString printString].
+"		strm nextPutAll: ' Kernel'.
+"		strm
+			nextPut: $); newLine;
+			nextPutAll: '        collect: [:each | Smalltalk at: each ifAbsent: ['; newLine;
+			nextPutAll: '            Application errorPrerequisite: #', vastName, ' missing: each]])'.
+	].	
+	
+	aStream nextChunkPut: chunk; newLine.! !
+
 !VASTExporter class methodsFor: 'as yet unclassified' stamp: 'gera 7/4/2019 01:31:20'!
 forPackageNamed: aString as: vastName
 	| package |
