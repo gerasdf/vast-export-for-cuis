@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 2:36:40 am'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 3:09:42 am'!
 'Description '!
-!provides: 'VAST-Exporter' 1 6!
+!provides: 'VAST-Exporter' 1 7!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
@@ -16,7 +16,7 @@ VASTExporterTest class
 
 !classDefinition: #VASTExporter category: #'VAST-Exporter'!
 Object subclass: #VASTExporter
-	instanceVariableNames: 'package vastName'
+	instanceVariableNames: 'package vastName comments'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'VAST-Exporter'!
@@ -24,6 +24,21 @@ Object subclass: #VASTExporter
 VASTExporter class
 	instanceVariableNames: ''!
 
+
+!VASTExporterTest commentStamp: 'gera 7/4/2019 02:54:26' prior: 0!
+This class has a comment so it can be tested!
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 03:09:08'!
+testClassComment
+	| expected actual comment |
+	exporter comments: true.
+	actual := String streamContents: [:strm |
+		exporter write: self class classCommentsOn: strm].
+	comment := 'This class has a comment so it can be tested'.
+	expected := 'VASTExporterTest comment: ', comment printString, '!!
+
+'.
+	self assert: expected equals: actual.! !
 
 !VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:25:10'!
 testClassDefinition
@@ -36,7 +51,7 @@ testClassDefinition
 	actual := exporter classDefinitionFor: self class.
 	self assert: expected equals: actual.! !
 
-!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:36:08'!
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 03:07:22'!
 testClassDefinitions
 	| result |
 	result := String streamContents: [:strm | 
@@ -58,13 +73,14 @@ testClassDefinitions
 	self assert: Character newLineCharacter equals: result next.
 	self assert:  'Object subclass: #VASTExporter
 	classInstanceVariableNames: ''''
-	instanceVariableNames: ''package vastName''
+	instanceVariableNames: ''package vastName comments''
 	classVariableNames: ''''
 	poolDictionaries: ''''' equals: result nextChunk.
 	self assert: Character newLineCharacter equals: result next.
 
 	self assert: Character newLineCharacter equals: result next.
-! !
+
+	self assert: result atEnd! !
 
 !VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:19:15'!
 testDefaultAppChunk
@@ -124,6 +140,22 @@ setUp
 		package: package;
 		vastName: 'VASTExporterTestPackageApp'! !
 
+!VASTExporter methodsFor: 'initialization' stamp: 'gera 7/4/2019 03:06:22'!
+initialize
+	comments := false! !
+
+!VASTExporter methodsFor: 'accessing' stamp: 'gera 7/4/2019 03:07:49'!
+comments
+	"Answer the value of comments"
+
+	^ comments! !
+
+!VASTExporter methodsFor: 'accessing' stamp: 'gera 7/4/2019 03:07:49'!
+comments: anObject
+	"Set the value of comments"
+
+	comments _ anObject! !
+
 !VASTExporter methodsFor: 'accessing' stamp: 'gera 7/4/2019 01:34:22'!
 package
 	"Answer the value of package"
@@ -180,16 +212,25 @@ classDefinitionFor: class
 defaultAppChunk
 	^ vastName, ' becomeDefault'! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:35:50'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 03:09:35'!
+write: class classCommentsOn: aStream
+	| comment |
+	comments ifTrue: [
+		comment := class organization classComment.
+		comment isEmpty ifFalse: [
+			aStream
+				nextChunkPut: class name, ' comment: ', comment storeString; newLine;
+				newLine]]! !
+
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 03:05:08'!
 write: sortedClasses classDefinitionsOn: aStream
 	sortedClasses
 		do: [ :class |
 			aStream
-				nextChunkPut: self defaultAppChunk;
-				newLine;
-				nextChunkPut: (self classDefinitionFor: class);
-				newLine;
-				newLine ]
+				nextChunkPut: self defaultAppChunk; newLine;
+				nextChunkPut: (self classDefinitionFor: class); newLine;
+				newLine.
+			self write: class classCommentsOn: aStream]
 		displayingProgress: 'Saving class definitions...'.! !
 
 !VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:09:39'!
@@ -258,3 +299,7 @@ forPackageNamed: aString as: vastName
 		vastName: vastName;
 		yourself
 	! !
+
+!VASTExporter class methodsFor: 'as yet unclassified' stamp: 'gera 7/4/2019 03:06:44'!
+new
+	^ super new initialize! !
