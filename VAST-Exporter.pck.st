@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 5:53:34 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 6:08:21 pm'!
 'Description '!
-!provides: 'VAST-Exporter' 1 9!
+!provides: 'VAST-Exporter' 1 10!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
@@ -270,6 +270,15 @@ classDefinitionFor: class
 			nextPutAll: 'poolDictionaries: ';
 			store: class sharedPoolsString]! !
 
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 18:05:21'!
+coreMethodsOf: aClass do: aBlock
+	"Evaluate aBlock with the actual methods in this package."
+
+	aClass organization categories do: [ :cat |
+		(package isForeignClassExtension: cat) ifFalse: [
+			(aClass organization listAtCategoryNamed: cat) do: [ :s |
+				aBlock value: (package referenceForMethod: s ofClass: aClass) ]]]! !
+
 !VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:18:22'!
 defaultAppChunk
 	^ vastName, ' becomeDefault'! !
@@ -295,22 +304,24 @@ write: sortedClasses classDefinitionsOn: aStream
 			self write: class classCommentsOn: aStream]
 		displayingProgress: 'Saving class definitions...'.! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:50:11'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:58:56'!
 write: classes methodsOn: aStream
 	self writeDefaultAppOn: aStream.
 	aStream newLine.
 	classes
 		do: [ :class |
-			self writeClassMethods: class class on: aStream.
-			self writeClassMethods: class on: aStream]
+			self writeClassMethodsOf: class class on: aStream.
+			self writeClassMethodsOf: class on: aStream]
 		displayingProgress: 'Saving methods...'! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:49:32'!
-writeClassMethods: class on: aStream
-		self 
-			writeMethodsHeaderFor: class on: aStream;
-			writeCoreMethodsOf: class on: aStream;
-		 	writeCoreMethodsOf: class class on: aStream! !
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 18:07:24'!
+writeClassMethodsOf: class on: aStream
+	self writeMethodsHeaderFor: class on: aStream.
+	self coreMethodsOf: class do: [ :methodReference |
+		methodReference isValid ifTrue: [
+			self writeMethod: methodReference on: aStream.
+		aStream newLine]].
+	! !
 
 !VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:38:16'!
 writeDefaultAppOn: aStream.
