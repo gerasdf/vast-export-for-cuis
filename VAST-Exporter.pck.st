@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 2:25:16 am'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 2:36:40 am'!
 'Description '!
-!provides: 'VAST-Exporter' 1 5!
+!provides: 'VAST-Exporter' 1 6!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
@@ -35,6 +35,36 @@ testClassDefinition
 	poolDictionaries: '''''.
 	actual := exporter classDefinitionFor: self class.
 	self assert: expected equals: actual.! !
+
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:36:08'!
+testClassDefinitions
+	| result |
+	result := String streamContents: [:strm | 
+		exporter write: {VASTExporterTest. VASTExporter} classDefinitionsOn: strm].
+	result := result readStream.
+
+	self assert: 'VASTExporterTestPackageApp becomeDefault' equals: result nextChunk.
+	self assert: Character newLineCharacter equals: result next.
+	self assert:  'TestCase subclass: #VASTExporterTest
+	classInstanceVariableNames: ''''
+	instanceVariableNames: ''package exporter''
+	classVariableNames: ''''
+	poolDictionaries: ''''' equals: result nextChunk.
+	self assert: Character newLineCharacter equals: result next.
+
+	self assert: Character newLineCharacter equals: result next.
+	
+	self assert: 'VASTExporterTestPackageApp becomeDefault' equals: result nextChunk.
+	self assert: Character newLineCharacter equals: result next.
+	self assert:  'Object subclass: #VASTExporter
+	classInstanceVariableNames: ''''
+	instanceVariableNames: ''package vastName''
+	classVariableNames: ''''
+	poolDictionaries: ''''' equals: result nextChunk.
+	self assert: Character newLineCharacter equals: result next.
+
+	self assert: Character newLineCharacter equals: result next.
+! !
 
 !VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 02:19:15'!
 testDefaultAppChunk
@@ -150,16 +180,16 @@ classDefinitionFor: class
 defaultAppChunk
 	^ vastName, ' becomeDefault'! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:17:57'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:35:50'!
 write: sortedClasses classDefinitionsOn: aStream
-
-	package classes
+	sortedClasses
 		do: [ :class |
 			aStream
-				nextPut: $!!;
 				nextChunkPut: self defaultAppChunk;
-					nextChunkPut: (self classDefinitionFor: class);
-					newLine ]
+				newLine;
+				nextChunkPut: (self classDefinitionFor: class);
+				newLine;
+				newLine ]
 		displayingProgress: 'Saving class definitions...'.! !
 
 !VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 02:09:39'!
