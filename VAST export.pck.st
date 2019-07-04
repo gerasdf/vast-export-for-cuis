@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 3 July 2019 at 11:26:16 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 3 July 2019 at 11:29:09 pm'!
 'Description '!
-!provides: 'VAST export' 1 2!
+!provides: 'VAST export' 1 3!
 SystemOrganization addCategory: #'VAST export'!
 
 
@@ -37,6 +37,10 @@ writeFeatureSpecOn: aStream
 	
 	aStream nextChunkPut: chunk; newLine.
 ! !
+
+!VASTExportCodePackage methodsFor: 'vast format' stamp: 'gera 7/3/2019 23:29:05'!
+writeSystemCategoriesOn: aStream
+	" nothing in the name of System Categories, I think "! !
 
 !VASTExportCodePackage class methodsFor: 'instance creation' stamp: 'gera 7/3/2019 21:41:03'!
 from: aCodePackage
@@ -75,6 +79,10 @@ writeFeatureSpecOn: aStream
 	
 	aStream nextChunkPut: chunk; newLine.
 ! !
+
+!VASTExportCodePackage methodsFor: 'vast format' stamp: 'gera 7/3/2019 23:29:05'!
+writeSystemCategoriesOn: aStream
+	" nothing in the name of System Categories, I think "! !
 
 !VASTExportCodePackage class methodsFor: 'instance creation' stamp: 'gera 7/3/2019 21:41:03'!
 from: aCodePackage
