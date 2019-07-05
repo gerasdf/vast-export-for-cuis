@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 6:08:21 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3795] on 4 July 2019 at 11:30:10 pm'!
 'Description '!
-!provides: 'VAST-Exporter' 1 10!
+!provides: 'VAST-Exporter' 1 11!
 SystemOrganization addCategory: #'VAST-Exporter'!
 
 
@@ -149,7 +149,7 @@ testFeatureSpecTwo
 testName
 	self assert: 'VAST-Exporter-TestPackage' equals: exporter package packageName! !
 
-!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 17:43:23'!
+!VASTExporterTest methodsFor: 'testing' stamp: 'gera 7/4/2019 23:25:24'!
 testWriteMethodOn
 	| result reference expected |
 	reference := package referenceForMethod: #setUp ofClass: self class.
@@ -304,6 +304,12 @@ write: sortedClasses classDefinitionsOn: aStream
 			self write: class classCommentsOn: aStream]
 		displayingProgress: 'Saving class definitions...'.! !
 
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 23:11:54'!
+write: classes initializersOn: aStream
+	Smalltalk hierarchySorted: classes do: [ :class |
+		(class class includesSelector: #initialize) ifTrue: [
+			aStream nextChunkPut: class name, ' initialize'; newLine ]]! !
+
 !VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:58:56'!
 write: classes methodsOn: aStream
 	self writeDefaultAppOn: aStream.
@@ -348,7 +354,7 @@ writeFeatureSpecOn: aStream
 	
 	aStream nextChunkPut: chunk; newLine; newLine.! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 17:44:01'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 23:25:30'!
 writeMethod: methodReference on: aStream
 	methodReference actualClass
 		printMethodChunk: methodReference methodSymbol
@@ -365,7 +371,7 @@ writeMethodsHeaderFor: class on: aStream
 		newLine;
 		newLine! !
 
-!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 03:29:49'!
+!VASTExporter methodsFor: 'exporting' stamp: 'gera 7/4/2019 23:28:57'!
 writeOnStream: aStream
 	" This method is based in CodePacket >> #writeOnStream "
 	| sortedClasses |
@@ -387,19 +393,23 @@ writeOnStream: aStream
 	self
 		write: sortedClasses classDefinitionsOn: aStream;
 		write: sortedClasses classCommentsOn: aStream;
-"		write: sortedClasses methodsForFileinOn: aStream;
-"		write: sortedClasses methodsOn: aStream.
+		write: sortedClasses methodsOn: aStream.
 
 	package
 		sortedExtensionMethodsDo:  [ :methodReference |
 			methodReference isValid ifTrue: [
 				self writeMethod: methodReference on: aStream ]]
 		displayingProgress: 'Saving extension methods...'.
+
+	aStream newLine.
 	self write: sortedClasses initializersOn: aStream.
 
+	"
 	package codePackageClass ifNotNil: [ :codePackageClass |
+		aStream newLine.
 		self write: { codePackageClass } initializersOn: aStream.
-		aStream nextChunkPut: codePackageClass name, ' postPackageInstall'; newLine ]! !
+		aStream nextChunkPut: codePackageClass name, ' postPackageInstall'; newLine ]
+	"! !
 
 !VASTExporter class methodsFor: 'as yet unclassified' stamp: 'gera 7/4/2019 01:31:20'!
 forPackageNamed: aString as: vastName
